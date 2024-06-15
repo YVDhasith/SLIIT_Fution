@@ -2,6 +2,8 @@
 
 @include 'config.php';
 
+session_start();
+
 if(isset($_POST['submit'])){
 
    $name = mysqli_real_escape_string($conn, $_POST['name']);
@@ -16,17 +18,20 @@ if(isset($_POST['submit'])){
 
    if(mysqli_num_rows($result) > 0){
 
-      $error[] = 'user already exist!';
+    $row = mysqli_fetch_array($result);
 
+    if($row['user_type']== 'admin'){
+        $_SESSION['admin_name'] = $row['name'];
+        header('location:admin_page.php');
+
+    }elseif($row['user_type']== 'user'){
+        $_SESSION['user_name'] = $row['name'];
+        header('location:user_page.php');
+    }
+      
    }else{
+        $error[] = 'incorrect email or password!';
 
-      if($pass != $cpass){
-         $error[] = 'password not matched!';
-      }else{
-         $insert = "INSERT INTO user_form(name, email, password, user_type) VALUES('$name','$email','$pass','$user_type')";
-         mysqli_query($conn, $insert);
-         header('location:login_form.php');
-      }
    }
 
 };
@@ -47,6 +52,13 @@ if(isset($_POST['submit'])){
 <div class="form-container">
     <form action="" method="post">
         <h3>login now</h3>
+        <?php
+      if(isset($error)){
+         foreach($error as $error){
+            echo '<span class="error-msg">'.$error.'</span>';
+         };
+      };
+      ?>
         <input type="email" name="email" required placeholder="Enter your email">
         <input type="password" name="password" required placeholder="Enter your password">
         <input type="submit" name="submit" value="login now" class="form-btn">
